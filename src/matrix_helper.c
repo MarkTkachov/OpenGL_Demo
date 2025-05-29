@@ -454,6 +454,33 @@ void rotatex(mat4 *out, mat4 *in, GLfloat angle_rad) {
     mat4_multiply(out, in, buffer);
 }
 
+void rotateaxis(mat4 *out, mat4 *in, vec3 *axis, GLfloat angle_rad) {
+    mat4 buffer[MAT4_SIZE];
+    memset(buffer, 0, MAT4_BYTESIZE);
+    identity(buffer);
+
+    vec3 n[VEC3_SIZE];
+    vec3_normalize(n, axis);
+
+    GLfloat c = cos(angle_rad);
+    GLfloat s = sin(angle_rad);
+    GLfloat t = 1 - c;
+
+    mat4_set(buffer, t * n[0] * n[0] + c, 0, 0);
+    mat4_set(buffer, t * n[0] * n[1] - s * n[2], 1, 0);
+    mat4_set(buffer, t * n[0] * n[2] + s * n[1], 2, 0);
+    
+    mat4_set(buffer, t * n[1] * n[0] + s * n[2], 0, 1);
+    mat4_set(buffer, t * n[1] * n[1] + c, 1, 1);
+    mat4_set(buffer, t * n[1] * n[2] - s * n[0], 2, 1);
+
+    mat4_set(buffer, t * n[2] * n[0] - s * n[1], 0, 2);
+    mat4_set(buffer, t * n[2] * n[1] + s * n[0], 1, 2);
+    mat4_set(buffer, t * n[2] * n[2] + c, 2, 2);
+
+    mat4_multiply(out, in, buffer);
+}
+
 void lookAt(mat4 *out, vec3 *eye, vec3 *center, vec3 *up) {
     mat4 m[MAT4_SIZE];
     memset(m, 0, MAT4_BYTESIZE);

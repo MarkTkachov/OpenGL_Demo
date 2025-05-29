@@ -103,6 +103,8 @@ void rotatez(mat4 *out, mat4 *in, GLfloat angle_rad);
 void rotatey(mat4 *out, mat4 *in, GLfloat angle_rad);
 // out = in * Rotation_Matrix_X(angle_rad)
 void rotatex(mat4 *out, mat4 *in, GLfloat angle_rad);
+// out = in * Rotation_Matrix_Around_Axis(axis, angle_rad)
+void rotateaxis(mat4 *out, mat4 *in, vec3 *axis, GLfloat angle_rad);
 
 // view matrix for given eye position, center(look) and up direction
 // result is written to out
