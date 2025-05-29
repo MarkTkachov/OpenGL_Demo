@@ -8,13 +8,12 @@
 #include "../inc/matrix_helper.h"
 #include <file_utils.h>
 #include <data_structs.h>
+#include <uniforms.h>
+
 #include <math.h>
 #include <string.h>
 
-GLuint program;
-// vertex array object
-GLuint vao;
-GLsizei vertexCount;
+Object3D earthObject;
 
 GLint emmisiveMaterialColorUniformLocation;
 GLint ambientLightColorUniformLocation;
@@ -25,11 +24,6 @@ GLint specularLightColorUniformLocation;
 GLint specularMaterialColorUniformLocation;
 GLint shininessMaterailUniformLocation;
 GLint lightPositionUniformLocation;
-
-GLint modelMatrixUniformLocation;
-GLint viewMatrixUniformLocation;
-GLint projectionMatrixUniformLocation;
-GLint normalMatrixUniformLocation;
 
 GLint dayTextureUniformLocation;
 GLint nightTextureUniformLocation;
@@ -53,69 +47,7 @@ void init(void)
     glDepthMask(GL_TRUE);
     // glutInitDisplayMode(GLUT_DEPTH);
     // create and compile vertex shader
-    char *vertexText = read_file("shaders/vertexShader.glsl", NULL);
-
-    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, (const GLchar *const *)&vertexText, NULL);
-    glCompileShader(vertexShader);
-    free(vertexText);
-    vertexText = NULL;
-
-    GLint status;
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &status);
-    if (!status)
-    {
-        printf("Failed to compile vertex shader\n");
-        GLchar infoLog[1024];
-        glGetShaderInfoLog(vertexShader, 1024, NULL, infoLog);
-        printf(infoLog);
-        return;
-    }
-
-    // create and compile fragment shader
-    char *fragmentText = read_file("shaders/fragmentShader.glsl", NULL);
-
-    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, (const GLchar *const *)&fragmentText, NULL);
-    glCompileShader(fragmentShader);
-    free(fragmentText);
-    fragmentText = NULL;
-
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &status);
-    if (!status)
-    {
-        printf("Failed to compile fragment shader\n");
-        GLchar infoLog[1024];
-        glGetShaderInfoLog(fragmentShader, 1024, NULL, infoLog);
-        printf(infoLog);
-        return;
-    }
-
-    // create and link shader program
-    program = glCreateProgram();
-    glAttachShader(program, vertexShader);
-    glAttachShader(program, fragmentShader);
-    glLinkProgram(program);
-
-    glGetProgramiv(program, GL_LINK_STATUS, &status);
-    if (!status)
-    {
-        printf("Failed to link program\n");
-        GLchar infoLog[1024];
-        glGetProgramInfoLog(program, 1024, NULL, infoLog);
-        printf(infoLog);
-        return;
-    }
-    glValidateProgram(program);
-    glGetProgramiv(program, GL_LINK_STATUS, &status);
-    if (!status)
-    {
-        printf("Failed to validate program\n");
-        GLchar infoLog[1024];
-        glGetProgramInfoLog(program, 1024, NULL, infoLog);
-        printf(infoLog);
-        return;
-    }
+    GLuint program = compile_program("shaders/vertexShader.glsl", "shaders/fragmentShader.glsl");
 
     emmisiveMaterialColorUniformLocation = glGetUniformLocation(program, "emmisiveMaterialColor");
     ambientLightColorUniformLocation = glGetUniformLocation(program, "ambientLightColor");
@@ -127,58 +59,20 @@ void init(void)
     shininessMaterailUniformLocation = glGetUniformLocation(program, "shininess");
     lightPositionUniformLocation = glGetUniformLocation(program, "lightPosition");
 
-    modelMatrixUniformLocation = glGetUniformLocation(program, "modelMatrix");
-    viewMatrixUniformLocation = glGetUniformLocation(program, "viewMatrix");
-    projectionMatrixUniformLocation = glGetUniformLocation(program, "projectionMatrix");
-    normalMatrixUniformLocation = glGetUniformLocation(program, "normalMatrix");
+    init_uniforms(program);
 
     dayTextureUniformLocation = glGetUniformLocation(program, "dayTexture");
     nightTextureUniformLocation = glGetUniformLocation(program, "nightTexture");
     oceanMaskTextureUniformLocation = glGetUniformLocation(program, "oceanMaskTexture");
     cloudsTextureUniformLocation = glGetUniformLocation(program, "cloudsTexture");
     
-
-    GLuint triangleVertexBufferObject;
-    read_obj_file("models/earth.obj", &triangleVertexBufferObject, &vertexCount);
     dayTexture = load_texture("textures/earth_day.png");
     nightTexture = load_texture("textures/earth_night.png");
     oceanMaskTexture = load_texture("textures/earth_ocean_mask.png");
     cloudsTexture = load_texture("textures/earth_clouds.png");
 
-    // create vertex array object
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, triangleVertexBufferObject);
-    // vertex position
-    glVertexAttribPointer(
-        // 0 from location = 0 in vertex shader
-        0,
-        4,
-        GL_FLOAT,
-        GL_FALSE,
-        sizeof(FaceVertex),
-        (GLvoid *)(offsetof(FaceVertex, vertex)));
-    glEnableVertexAttribArray(0);
-    // texture coordinates
-    glVertexAttribPointer(
-        1,
-        3,
-        GL_FLOAT,
-        GL_FALSE,
-        sizeof(FaceVertex),
-        (GLvoid *)(offsetof(FaceVertex, texture)));
-    glEnableVertexAttribArray(1);
-    // normals coordinates
-    glVertexAttribPointer(
-        2,
-        3,
-        GL_FLOAT,
-        GL_FALSE,
-        sizeof(FaceVertex),
-        (GLvoid *)(offsetof(FaceVertex, normal)));
-    glEnableVertexAttribArray(2);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
+    load_3d_object(&earthObject, "models/earth.obj", program);
+    
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glViewport(0, 0, 800, 800);
 
@@ -194,10 +88,12 @@ void draw(void)
 
     angle += 0.02;
 
+    earthObject.rotation[1] = M_PI / 3.123 * angle;
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     lookAt(viewMatrix, (vec3[]){2 * sin(angle/2), 1, 2 * cos(angle/2)}, (vec3[]){0, 0, 0}, (vec3[]){0, 1, 0});
-    glUseProgram(program);
+    glUseProgram(earthObject.program);
     glUniformMatrix4fv(projectionMatrixUniformLocation, 1, GL_FALSE, projMatrix);
     glUniformMatrix4fv(viewMatrixUniformLocation, 1, GL_FALSE, viewMatrix);
 
@@ -212,14 +108,14 @@ void draw(void)
     glUniform1f(shininessMaterailUniformLocation, 51.2f);
     //light position in scene coordinates
     glUniform3f(lightPositionUniformLocation, -3, 3, 3);
-    glUniform1f(glGetUniformLocation(program, "time"), angle);
-    glBindVertexArray(vao);
+    glUniform1f(glGetUniformLocation(earthObject.program, "time"), angle);
+    glBindVertexArray(earthObject.vao);
 
     // model matrix
     identity(modelMatrix);
-    translate(modelMatrix, modelMatrix, (vec3[]){0, 0, 0});
-    rotatey(modelMatrix, modelMatrix, M_PI / 3.123 * angle);
-    scale(modelMatrix, modelMatrix, (vec3[]){1.0f, 1.0f, 1.0f});
+    translate(modelMatrix, modelMatrix, earthObject.position);
+    rotatey(modelMatrix, modelMatrix, earthObject.rotation[1]);
+    scale(modelMatrix, modelMatrix, earthObject.scale);
 
     glUniformMatrix4fv(modelMatrixUniformLocation, 1, GL_FALSE, modelMatrix);
 
@@ -250,9 +146,7 @@ void draw(void)
     glActiveTexture(GL_TEXTURE4);
     glBindTexture(GL_TEXTURE_2D, cloudsTexture);
 
-
-
-    glDrawArrays(GL_TRIANGLES, 0, vertexCount);
+    glDrawArrays(GL_TRIANGLES, 0, earthObject.vertex_count);
 
 }
 

@@ -51,3 +51,6 @@ Mkfile.old
 dkms.conf
 
 cg1
+
+.vscode
+.idea

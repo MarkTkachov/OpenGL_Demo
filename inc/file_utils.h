@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <GL/glew.h>
+#include <data_structs.h>
 
 char *read_file(const char *filename, size_t *length);
 
