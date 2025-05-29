@@ -285,3 +285,82 @@ void load_3d_object(Object3D *out, const char *filename, GLuint program) {
     memcpy(out->rotation, (vec3[]){0.0f, 0.0f, 0.0f}, VEC3_BYTESIZE);
     memcpy(out->scale, (vec3[]){1.0f, 1.0f, 1.0f}, VEC3_BYTESIZE);
 }
+
+GLuint compile_shader(const char *filename, GLenum shader_type) {
+    assert(filename != NULL);
+    assert(shader_type == GL_VERTEX_SHADER || shader_type == GL_FRAGMENT_SHADER);
+
+    char *shader_source = read_file(filename, NULL);
+    if (shader_source == NULL) {
+        fprintf(stderr, "Error reading shader file: %s\n", filename);
+        return 0;
+    }
+
+    GLuint shader = glCreateShader(shader_type);
+    glShaderSource(shader, 1, (const GLchar *const *)&shader_source, NULL);
+    glCompileShader(shader);
+    free(shader_source);
+
+    GLint status;
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+    if (!status) {
+        fprintf(stderr, "Failed to compile shader: %s\n", filename);
+        GLchar infoLog[1024];
+        glGetShaderInfoLog(shader, sizeof(infoLog), NULL, infoLog);
+        fprintf(stderr, "%s\n", infoLog);
+        glDeleteShader(shader);
+        return 0;
+    }
+    return shader;
+}
+
+GLuint compile_program(const char *vertex_shader_filename, const char *fragment_shader_filename) {
+    assert(vertex_shader_filename != NULL);
+    assert(fragment_shader_filename != NULL);
+
+    GLuint vertex_shader = compile_shader(vertex_shader_filename, GL_VERTEX_SHADER);
+    if (vertex_shader == 0) {
+        return 0;
+    }
+
+    GLuint fragment_shader = compile_shader(fragment_shader_filename, GL_FRAGMENT_SHADER);
+    if (fragment_shader == 0) {
+        glDeleteShader(vertex_shader);
+        return 0;
+    }
+
+    GLuint program = glCreateProgram();
+    glAttachShader(program, vertex_shader);
+    glAttachShader(program, fragment_shader);
+    glLinkProgram(program);
+
+    GLint status;
+    glGetProgramiv(program, GL_LINK_STATUS, &status);
+    if (!status) {
+        fprintf(stderr, "Failed to link program\n");
+        GLchar infoLog[1024];
+        glGetProgramInfoLog(program, sizeof(infoLog), NULL, infoLog);
+        fprintf(stderr, "%s\n", infoLog);
+        glDeleteProgram(program);
+        glDeleteShader(vertex_shader);
+        glDeleteShader(fragment_shader);
+        return 0;
+    }
+
+    glValidateProgram(program);
+    glGetProgramiv(program, GL_VALIDATE_STATUS, &status);
+    if (!status) {
+        fprintf(stderr, "Failed to validate program\n");
+        GLchar infoLog[1024];
+        glGetProgramInfoLog(program, sizeof(infoLog), NULL, infoLog);
+        fprintf(stderr, "%s\n", infoLog);
+        glDeleteProgram(program);
+        return 0;
+    }
+
+    // glDeleteShader(vertex_shader);
+    // glDeleteShader(fragment_shader);
+
+    return program;
+
+}
