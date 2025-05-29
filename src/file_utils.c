@@ -228,3 +228,60 @@ GLuint load_texture(const char *filename) {
     glBindTexture(GL_TEXTURE_2D, 0);
     return texture;
 }
+
+void load_3d_object(Object3D *out, const char *filename, GLuint program) {
+    assert(out != NULL);
+    assert(filename != NULL);
+
+    memset(out, 0, sizeof(Object3D));
+    GLuint face_vertex_vbo;
+    GLsizei vertex_count;
+    read_obj_file(filename, &face_vertex_vbo, &vertex_count);
+    if (face_vertex_vbo == 0 || vertex_count == 0) {
+        fprintf(stderr, "Error loading 3D object from file: %s\n", filename);
+        return;
+    }
+
+    GLuint vao;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, face_vertex_vbo);
+
+    // vertex position
+    glVertexAttribPointer(
+        // 0 from location = 0 in vertex shader
+        0,
+        4,
+        GL_FLOAT,
+        GL_FALSE,
+        sizeof(FaceVertex),
+        (GLvoid *)(offsetof(FaceVertex, vertex)));
+    glEnableVertexAttribArray(0);
+    // texture coordinates
+    glVertexAttribPointer(
+        1,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        sizeof(FaceVertex),
+        (GLvoid *)(offsetof(FaceVertex, texture)));
+    glEnableVertexAttribArray(1);
+    // normals coordinates
+    glVertexAttribPointer(
+        2,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        sizeof(FaceVertex),
+        (GLvoid *)(offsetof(FaceVertex, normal)));
+    glEnableVertexAttribArray(2);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    out->vao = vao;
+    out->vertex_count = vertex_count;
+    out->program = program;
+    memcpy(out->position, (vec3[]){0.0f, 0.0f, 0.0f}, VEC3_BYTESIZE);
+    memcpy(out->rotation, (vec3[]){0.0f, 0.0f, 0.0f}, VEC3_BYTESIZE);
+    memcpy(out->scale, (vec3[]){1.0f, 1.0f, 1.0f}, VEC3_BYTESIZE);
+}
