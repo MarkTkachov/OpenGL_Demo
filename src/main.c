@@ -9,6 +9,7 @@
 #include <file_utils.h>
 #include <data_structs.h>
 #include <uniforms.h>
+#include <render_helpers.h>
 
 #include <math.h>
 #include <string.h>
@@ -38,7 +39,7 @@ GLuint cloudsTexture;
 
 
 GLfloat logoColor[] = {220.0f, 60.0f, 5.0f};
-mat4 projMatrix[MAT4_SIZE];
+
 
 void init(void)
 {
@@ -76,13 +77,11 @@ void init(void)
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glViewport(0, 0, 800, 800);
 
-    perspective(projMatrix, 90 / (180 / M_PI), 800 / 800, 0.01, 1000);
+    calculate_projection_matrix(90 / (180 / M_PI), 800 / 800, 0.01, 1000);
 }
 
 void draw(void)
 {
-    static mat4 modelMatrix[MAT4_SIZE];
-    static mat4 viewMatrix[MAT4_SIZE];
     static float angle = 0;
     static int xRev = 1, yRev = 1;
 
@@ -92,10 +91,8 @@ void draw(void)
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    lookAt(viewMatrix, (vec3[]){2 * sin(angle/2), 1, 2 * cos(angle/2)}, (vec3[]){0, 0, 0}, (vec3[]){0, 1, 0});
-    glUseProgram(earthObject.program);
-    glUniformMatrix4fv(projectionMatrixUniformLocation, 1, GL_FALSE, projMatrix);
-    glUniformMatrix4fv(viewMatrixUniformLocation, 1, GL_FALSE, viewMatrix);
+    calculate_view_matrix((vec3[]){2 * sin(angle/2), 1, 2 * cos(angle/2)}, (vec3[]){0, 0, 0}, (vec3[]){0, 1, 0});
+    use_object_program(&earthObject);
 
     // material properties
     glUniform4f(emmisiveMaterialColorUniformLocation, 0, 0, 0, 1.0f);
@@ -109,25 +106,6 @@ void draw(void)
     //light position in scene coordinates
     glUniform3f(lightPositionUniformLocation, -3, 3, 3);
     glUniform1f(glGetUniformLocation(earthObject.program, "time"), angle);
-    glBindVertexArray(earthObject.vao);
-
-    // model matrix
-    identity(modelMatrix);
-    translate(modelMatrix, modelMatrix, earthObject.position);
-    rotatey(modelMatrix, modelMatrix, earthObject.rotation[1]);
-    scale(modelMatrix, modelMatrix, earthObject.scale);
-
-    glUniformMatrix4fv(modelMatrixUniformLocation, 1, GL_FALSE, modelMatrix);
-
-    //normal matrix
-    mat4 normalMatrix4[MAT4_SIZE];
-    identity(normalMatrix4);
-    mat4_multiply(normalMatrix4, viewMatrix, modelMatrix);
-    mat3 normalMatrix3[MAT3_SIZE];
-    mat4_to_mat3(normalMatrix3, normalMatrix4);
-    mat3_inverse(normalMatrix3, normalMatrix3); 
-    mat3_transpose(normalMatrix3, normalMatrix3);
-    glUniformMatrix3fv(normalMatrixUniformLocation, 1, GL_FALSE, normalMatrix3);
 
     //textures
     glUniform1i(dayTextureUniformLocation, 1);
@@ -146,7 +124,7 @@ void draw(void)
     glActiveTexture(GL_TEXTURE4);
     glBindTexture(GL_TEXTURE_2D, cloudsTexture);
 
-    glDrawArrays(GL_TRIANGLES, 0, earthObject.vertex_count);
+    render_object(&earthObject);
 
 }
 
