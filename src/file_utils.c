@@ -229,6 +229,42 @@ GLuint load_texture(const char *filename) {
     return texture;
 }
 
+GLuint load_cubemap(const char *faces[6])
+{
+    GLuint textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+    for (int i = 0; i < 6; i++)
+    {
+        int width, height, nrChannels;
+        stbi_set_flip_vertically_on_load(0);
+        assert(faces[i] != NULL);
+        unsigned char *data = stbi_load(faces[i], &width, &height, &nrChannels, 0);
+        if (data)
+        {
+            // printf("Cubemap texture loaded: %s (%d x %d, %d channels)\n", faces[i], width, height, nrChannels);
+            GLint format = nrChannels == 1 ? GL_RED : nrChannels == 2 ? GL_RG : nrChannels == 3 ? GL_RGB : GL_RGBA;
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+            stbi_image_free(data);
+        }
+        else
+        {
+            printf("Cubemap texture failed to load at path: %s\n", faces[i]);
+            stbi_image_free(data);
+        }
+    }
+
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    return textureID;
+}
+
+
 void load_3d_object(Object3D *out, const char *filename, GLuint program) {
     assert(out != NULL);
     assert(filename != NULL);

@@ -29,4 +29,25 @@ GLuint compile_program(const char *vertex_shader_filename, const char *fragment_
 
 GLuint load_texture(const char *filename);
 
+/**
+ * @brief  Load a cubemap texture from six image files.
+ * Order of the faces:
+ * 
+ * 1. Positive X (right)
+ * 
+ * 2. Negative X (left)
+ * 
+ * 3. Positive Y (top)
+ * 
+ * 4. Negative Y (bottom)
+ * 
+ * 5. Positive Z (front)
+ * 
+ * 6. Negative Z (back)
+ * 
+ * @param faces  Array of six strings, each representing the path to an image file for the cubemap faces.
+ * @return GLuint  The OpenGL texture ID of the loaded cubemap texture, or 0 on failure.
+ */
+GLuint load_cubemap(const char *faces[6]);
+
 #endif

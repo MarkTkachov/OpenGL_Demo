@@ -10,11 +10,14 @@
 #include <data_structs.h>
 #include <uniforms.h>
 #include <render_helpers.h>
+#include <assert.h>
+#include <stb_image.h>
 
 #include <math.h>
 #include <string.h>
 
 Object3D earthObject;
+Object3D skybox;
 
 GLint emmisiveMaterialColorUniformLocation;
 GLint ambientLightColorUniformLocation;
@@ -36,19 +39,23 @@ GLuint nightTexture;
 GLuint oceanMaskTexture;
 GLuint cloudsTexture;
 
+GLuint skyTexture;
+GLint skyTextureUniformLocation;
 
 
 GLfloat logoColor[] = {220.0f, 60.0f, 5.0f};
 
 
+
 void init(void)
 {
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
+    // glEnable(GL_CULL_FACE);
     glDepthMask(GL_TRUE);
     // glutInitDisplayMode(GLUT_DEPTH);
     // create and compile vertex shader
     GLuint program = compile_program("shaders/vertexShader.glsl", "shaders/fragmentShader.glsl");
+    GLuint skyProgram = compile_program("shaders/skybox_vertex.glsl", "shaders/skybox_fragment.glsl");
 
     emmisiveMaterialColorUniformLocation = glGetUniformLocation(program, "emmisiveMaterialColor");
     ambientLightColorUniformLocation = glGetUniformLocation(program, "ambientLightColor");
@@ -67,12 +74,23 @@ void init(void)
     oceanMaskTextureUniformLocation = glGetUniformLocation(program, "oceanMaskTexture");
     cloudsTextureUniformLocation = glGetUniformLocation(program, "cloudsTexture");
     
+    skyTextureUniformLocation = glGetUniformLocation(skyProgram, "skyTexture");
+    
     dayTexture = load_texture("textures/earth_day.png");
     nightTexture = load_texture("textures/earth_night.png");
     oceanMaskTexture = load_texture("textures/earth_ocean_mask.png");
     cloudsTexture = load_texture("textures/earth_clouds.png");
+    skyTexture = load_cubemap((const char *[6]){
+        "textures/spiaggia_cubemap/px.png",
+        "textures/spiaggia_cubemap/nx.png",
+        "textures/spiaggia_cubemap/py.png",
+        "textures/spiaggia_cubemap/ny.png",
+        "textures/spiaggia_cubemap/pz.png",
+        "textures/spiaggia_cubemap/nz.png"
+    });
 
     load_3d_object(&earthObject, "models/earth.obj", program);
+    load_3d_object(&skybox, "models/cube.obj", skyProgram);
     
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glViewport(0, 0, 800, 800);
@@ -82,6 +100,8 @@ void init(void)
 
 void draw(void)
 {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     static float angle = 0;
     static int xRev = 1, yRev = 1;
 
@@ -89,10 +109,24 @@ void draw(void)
 
     earthObject.rotation[1] = M_PI / 3.123 * angle;
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     calculate_view_matrix((vec3[]){2 * sin(angle/2), 1, 2 * cos(angle/2)}, (vec3[]){0, 0, 0}, (vec3[]){0, 1, 0});
+
+    glDepthMask(GL_FALSE);
+    glDisable(GL_CULL_FACE);
+    use_object_program(&skybox);
+    init_uniforms(skybox.program);
+
+    glUniform1i(skyTextureUniformLocation, 10);
+    glActiveTexture(GL_TEXTURE10);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, skyTexture);
+
+    render_object(&skybox);
+    glDepthMask(GL_TRUE);
+
+
     use_object_program(&earthObject);
+    init_uniforms(earthObject.program);
 
     // material properties
     glUniform4f(emmisiveMaterialColorUniformLocation, 0, 0, 0, 1.0f);
