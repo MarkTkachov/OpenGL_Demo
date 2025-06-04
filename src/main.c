@@ -18,6 +18,7 @@
 
 Object3D earthObject;
 Object3D skybox;
+Object3D waterSurface;
 
 GLint emmisiveMaterialColorUniformLocation;
 GLint ambientLightColorUniformLocation;
@@ -42,6 +43,11 @@ GLuint cloudsTexture;
 GLuint skyTexture;
 GLint skyTextureUniformLocation;
 
+GLuint waterTexture;
+GLuint waterNormalTexture;
+GLint waterTextureUniformLocation;
+GLint waterNormalTextureUniformLocation;
+
 
 GLfloat logoColor[] = {220.0f, 60.0f, 5.0f};
 
@@ -56,6 +62,7 @@ void init(void)
     // create and compile vertex shader
     GLuint program = compile_program("shaders/vertexShader.glsl", "shaders/fragmentShader.glsl");
     GLuint skyProgram = compile_program("shaders/skybox_vertex.glsl", "shaders/skybox_fragment.glsl");
+    GLuint waterProgram = compile_program("shaders/vertexShader.glsl", "shaders/normal_mapped_fragment.glsl");
 
     emmisiveMaterialColorUniformLocation = glGetUniformLocation(program, "emmisiveMaterialColor");
     ambientLightColorUniformLocation = glGetUniformLocation(program, "ambientLightColor");
@@ -75,6 +82,8 @@ void init(void)
     cloudsTextureUniformLocation = glGetUniformLocation(program, "cloudsTexture");
     
     skyTextureUniformLocation = glGetUniformLocation(skyProgram, "skyTexture");
+    waterTextureUniformLocation = glGetUniformLocation(waterProgram, "baseTexture");
+    waterNormalTextureUniformLocation = glGetUniformLocation(waterProgram, "normalTexture");
     
     dayTexture = load_texture("textures/earth_day.png");
     nightTexture = load_texture("textures/earth_night.png");
@@ -88,9 +97,12 @@ void init(void)
         "textures/spiaggia_cubemap/pz.png",
         "textures/spiaggia_cubemap/nz.png"
     });
+    waterTexture = load_texture("textures/water.jpg");
+    waterNormalTexture = load_texture("textures/water_normal.jpg");
 
     load_3d_object(&earthObject, "models/earth.obj", program);
     load_3d_object(&skybox, "models/cube.obj", skyProgram);
+    load_3d_object(&waterSurface, "models/flat_panel.obj", waterProgram);
     
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glViewport(0, 0, 800, 800);
@@ -105,12 +117,13 @@ void draw(void)
     static float angle = 0;
     static int xRev = 1, yRev = 1;
 
+    vec3 lightPosition[VEC3_SIZE] = {100 * sin(angle/2), 100 * cos(angle/2), 0};
     angle += 0.02;
 
     earthObject.rotation[1] = M_PI / 3.123 * angle;
 
 
-    calculate_view_matrix((vec3[]){2 * sin(angle/2), 1, 2 * cos(angle/2)}, (vec3[]){0, 0, 0}, (vec3[]){0, 1, 0});
+    calculate_view_matrix((vec3[]){2, 1, 2 * cos(angle/2)}, (vec3[]){0, 0, 0}, (vec3[]){0, 1, 0});
 
     glDepthMask(GL_FALSE);
     glDisable(GL_CULL_FACE);
@@ -123,6 +136,28 @@ void draw(void)
 
     render_object(&skybox);
     glDepthMask(GL_TRUE);
+
+    waterSurface.position[1] = -10;
+    waterSurface.scale[0] = 1000;
+    waterSurface.scale[2] = 1000;
+    use_object_program(&waterSurface);
+    init_uniforms(waterSurface.program);
+
+    glUniform1i(waterTextureUniformLocation, 5);
+    glActiveTexture(GL_TEXTURE5);
+    glBindTexture(GL_TEXTURE_2D, waterTexture);
+    glUniform1i(waterNormalTextureUniformLocation, 6);
+    glActiveTexture(GL_TEXTURE6);
+    glBindTexture(GL_TEXTURE_2D, waterNormalTexture);
+
+    glUniform4f(glGetUniformLocation(waterSurface.program, "ambientLightColor"), 0.1f, 0.1f, 0.1f, 0.1f);
+    glUniform4f(glGetUniformLocation(waterSurface.program, "diffuseLightColor"), 1.0f, 1.0f, 1.0f, 1.0f);
+    glUniform4f(glGetUniformLocation(waterSurface.program, "specularLightColor"), 1.0f, 1.0f, 1.0f, 1.0f);
+    glUniform1f(glGetUniformLocation(waterSurface.program, "shininess"), 10.0f);
+    glUniform3f(glGetUniformLocation(waterSurface.program, "lightPosition"), lightPosition[0], lightPosition[1], lightPosition[2]);
+    glUniform1f(glGetUniformLocation(waterSurface.program, "time"), angle);
+    glUniform1f(glGetUniformLocation(waterSurface.program, "textureScale"), 100.0f);
+    render_object(&waterSurface);
 
 
     use_object_program(&earthObject);
@@ -138,7 +173,7 @@ void draw(void)
     glUniform4f(specularMaterialColorUniformLocation, 0.58f, 0.22f, 0.07f, 1.0f);
     glUniform1f(shininessMaterailUniformLocation, 51.2f);
     //light position in scene coordinates
-    glUniform3f(lightPositionUniformLocation, -3, 3, 3);
+    glUniform3f(lightPositionUniformLocation, lightPosition[0], lightPosition[1], lightPosition[2]);
     glUniform1f(glGetUniformLocation(earthObject.program, "time"), angle);
 
     //textures
