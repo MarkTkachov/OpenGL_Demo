@@ -47,6 +47,10 @@ char *read_file(const char *filename, size_t *length)
 
 void read_obj_file(const char *filename, GLuint *face_vertex_vbo_out, GLsizei *vertex_count_out)
 {
+    assert(filename != NULL);
+    assert(face_vertex_vbo_out != NULL);
+    assert(vertex_count_out != NULL);
+
     FILE *file = fopen(filename, "r");
     if (file == NULL)
     {
@@ -89,7 +93,7 @@ void read_obj_file(const char *filename, GLuint *face_vertex_vbo_out, GLsizei *v
     VerticeCoords *vertices = malloc(sizeof(VerticeCoords) * vertex_read_count);
     TextureCoords *textures = malloc(sizeof(TextureCoords) * texture_read_count);
     VertexNormal *normals = malloc(sizeof(VertexNormal) * normal_read_count);
-    FaceVertex *facesVertices = malloc(sizeof(FaceVertex) * face_read_count * 3);
+    FaceVertexWithTangent *facesVertices = malloc(sizeof(FaceVertexWithTangent) * face_read_count * 3);
     if (vertices == NULL || textures == NULL || normals == NULL || facesVertices == NULL)
     {
         perror("Error allocating memory");
@@ -105,7 +109,7 @@ void read_obj_file(const char *filename, GLuint *face_vertex_vbo_out, GLsizei *v
     memset(vertices, 0, sizeof(VerticeCoords) * vertex_read_count);
     memset(textures, 0, sizeof(TextureCoords) * texture_read_count);
     memset(normals, 0, sizeof(TextureCoords) * normal_read_count);
-    memset(facesVertices, 0, sizeof(FaceVertex) * face_read_count * 3);
+    memset(facesVertices, 0, sizeof(FaceVertexWithTangent) * face_read_count * 3);
 
     // read the vertices, texture coordinates, and normals
     GLsizei vertex_index = 0;
@@ -141,12 +145,14 @@ void read_obj_file(const char *filename, GLuint *face_vertex_vbo_out, GLsizei *v
             VerticeCoords vertex;
             TextureCoords texture;
             VertexNormal normal;
+            VertexNormal tangent;
             int vertex_indices[3];
             int texture_indices[3];
             int normal_indices[3];
             memset(&vertex, 0, sizeof(vertex));
             memset(&texture, 0, sizeof(texture));
             memset(&normal, 0, sizeof(normal));
+            memset(&tangent, 0, sizeof(tangent));
             memset(vertex_indices, 0, sizeof(vertex_indices));
             memset(texture_indices, 0, sizeof(texture_indices));
             memset(normal_indices, 0, sizeof(normal_indices));
@@ -165,20 +171,43 @@ void read_obj_file(const char *filename, GLuint *face_vertex_vbo_out, GLsizei *v
                 printf("Error: Cannot parse face: %s\n", line);
                 continue;
             }
-            // combine data from arrays into single FaceVertex
+            // calculate the tangent vector
+
+            // combine data from arrays into single FaceVertexWithTangent
             for (int i = 0; i < 3; i++)
             {
                 vertex_indices[i]--;
                 texture_indices[i]--;
                 normal_indices[i]--;
                 if (vertex_indices[i] >= 0)
-                    facesVertices[face_index].vertex = vertices[vertex_indices[i]];
+                    facesVertices[face_index + i].vertex = vertices[vertex_indices[i]];
                 if (texture_indices[i] >= 0)
-                    facesVertices[face_index].texture = textures[texture_indices[i]];
+                    facesVertices[face_index + i].texture = textures[texture_indices[i]];
                 if (normal_indices[i] >= 0)
-                    facesVertices[face_index].normal = normals[normal_indices[i]];
-                face_index++;
+                    facesVertices[face_index + i].normal = normals[normal_indices[i]];
             }
+
+            vec3 edge1[VEC3_SIZE], edge2[VEC3_SIZE];
+            vec3 deltaUV1[VEC3_SIZE], deltaUV2[VEC3_SIZE];
+            // calculate edges and delta UVs
+            vec3_sub(edge1, (vec3 *)(&facesVertices[face_index + 1].vertex), (vec3 *)(&facesVertices[face_index].vertex));
+            vec3_sub(edge2, (vec3 *)(&facesVertices[face_index + 2].vertex), (vec3 *)(&facesVertices[face_index].vertex));
+            vec3_sub(deltaUV1, (vec3 *)(&facesVertices[face_index + 1].texture), (vec3 *)(&facesVertices[face_index].texture));
+            vec3_sub(deltaUV2, (vec3 *)(&facesVertices[face_index + 2].texture), (vec3 *)(&facesVertices[face_index].texture));
+            float f = 1.0f / (deltaUV1[0] * deltaUV2[1] - deltaUV1[1] * deltaUV2[0]);
+            // calculate tangent vector
+            tangent.x = f * (deltaUV2[1] * edge1[0] - deltaUV1[1] * edge2[0]);
+            tangent.y = f * (deltaUV2[1] * edge1[1] - deltaUV1[1] * edge2[1]);
+            tangent.z = f * (deltaUV2[1] * edge1[2] - deltaUV1[1] * edge2[2]);
+            // normalize tangent vector
+            vec3_normalize((vec3 *)&tangent, (vec3 *)&tangent);
+            // assign tangent vector to each face vertex
+            facesVertices[face_index].tangent = tangent;
+            facesVertices[face_index + 1].tangent = tangent;
+            facesVertices[face_index + 2].tangent = tangent;
+
+            // increment face index by 3 for the next face
+            face_index += 3;
         }
     }
     free(line);
@@ -190,7 +219,7 @@ void read_obj_file(const char *filename, GLuint *face_vertex_vbo_out, GLsizei *v
     GLuint face_vertex_vbo;
     glGenBuffers(1, &face_vertex_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, face_vertex_vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(FaceVertex) * face_index, facesVertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(FaceVertexWithTangent) * face_index, facesVertices, GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     if (face_vertex_vbo_out != NULL)
     {
@@ -207,6 +236,8 @@ void read_obj_file(const char *filename, GLuint *face_vertex_vbo_out, GLsizei *v
 }
 
 GLuint load_texture(const char *filename) {
+    assert(filename != NULL);
+
     int width, height, channels;
     stbi_set_flip_vertically_on_load(1);
     unsigned char *data = stbi_load(filename, &width, &height, &channels, 0);
@@ -231,6 +262,11 @@ GLuint load_texture(const char *filename) {
 
 GLuint load_cubemap(const char *faces[6])
 {
+    assert(faces != NULL);
+    for (int i = 0; i < 6; i++)
+    {
+        assert(faces[i] != NULL);
+    }
     GLuint textureID;
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
@@ -264,7 +300,6 @@ GLuint load_cubemap(const char *faces[6])
     return textureID;
 }
 
-
 void load_3d_object(Object3D *out, const char *filename, GLuint program) {
     assert(out != NULL);
     assert(filename != NULL);
@@ -290,8 +325,8 @@ void load_3d_object(Object3D *out, const char *filename, GLuint program) {
         4,
         GL_FLOAT,
         GL_FALSE,
-        sizeof(FaceVertex),
-        (GLvoid *)(offsetof(FaceVertex, vertex)));
+        sizeof(FaceVertexWithTangent),
+        (GLvoid *)(offsetof(FaceVertexWithTangent, vertex)));
     glEnableVertexAttribArray(0);
     // texture coordinates
     glVertexAttribPointer(
@@ -299,8 +334,8 @@ void load_3d_object(Object3D *out, const char *filename, GLuint program) {
         3,
         GL_FLOAT,
         GL_FALSE,
-        sizeof(FaceVertex),
-        (GLvoid *)(offsetof(FaceVertex, texture)));
+        sizeof(FaceVertexWithTangent),
+        (GLvoid *)(offsetof(FaceVertexWithTangent, texture)));
     glEnableVertexAttribArray(1);
     // normals coordinates
     glVertexAttribPointer(
@@ -308,9 +343,18 @@ void load_3d_object(Object3D *out, const char *filename, GLuint program) {
         3,
         GL_FLOAT,
         GL_FALSE,
-        sizeof(FaceVertex),
-        (GLvoid *)(offsetof(FaceVertex, normal)));
+        sizeof(FaceVertexWithTangent),
+        (GLvoid *)(offsetof(FaceVertexWithTangent, normal)));
     glEnableVertexAttribArray(2);
+    // tangent coordinates
+    glVertexAttribPointer(
+        3,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        sizeof(FaceVertexWithTangent),
+        (GLvoid *)(offsetof(FaceVertexWithTangent, tangent)));
+    glEnableVertexAttribArray(3);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
