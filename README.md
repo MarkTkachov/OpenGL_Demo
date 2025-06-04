@@ -21,6 +21,11 @@ To build the program, run the following commands in the terminal:
 ``` bash
 make
 ```
+
+To build the program without assertions, run the following commands in the terminal:
+``` bash
+NDEBUG="true" make
+```
 To run the program, execute the following command:
 ``` bash
 ./cg1

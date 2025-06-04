@@ -3,6 +3,7 @@
 #include <string.h>
 #include <math.h>
 #include <stdio.h>
+#include <assert.h>
 
 mat4 *mat4_alloc()
 {
@@ -13,15 +14,23 @@ mat4 *mat4_alloc()
 
 GLfloat mat4_get(mat4 *m, int x, int y)
 {
+    assert(x >= 0 && x < 4 && y >= 0 && y < 4);
+    assert(m != NULL);
+
     return m[x * 4 + y];
 }
 
 void mat4_set(mat4 *m, GLfloat val, int x, int y)
 {
+    assert(x >= 0 && x < 4 && y >= 0 && y < 4);
+    assert(m != NULL);
+
     m[x * 4 + y] = val;
 }
 
 void mat4_print(mat4 *m) {
+    assert(m != NULL);
+
     for (int i = 0; i < 4; i++)
     {
         for (int j = 0; j < 4; j++)
@@ -33,6 +42,8 @@ void mat4_print(mat4 *m) {
 }
 
 GLfloat mat4_determinant(mat4 *m) {
+    assert(m != NULL);
+
     GLfloat det = 0;
     for (int i = 0; i < 4; i++)
     {
@@ -61,6 +72,8 @@ GLfloat mat4_determinant(mat4 *m) {
 }
 
 void mat4_inverse(mat4 *out, mat4 *in) {
+    assert(out != NULL && in != NULL);
+
     GLfloat det = mat4_determinant(in);
     if (det == 0)
     {
@@ -108,15 +121,21 @@ mat3 *mat3_alloc()
 
 GLfloat mat3_get(mat3 *m, int x, int y)
 {
+    assert(x >= 0 && x < 3 && y >= 0 && y < 3);
+
     return m[x * 3 + y];
 }
 
 void mat3_set(mat3 *m, GLfloat val, int x, int y)
 {
+    assert(x >= 0 && x < 3 && y >= 0 && y < 3);
+
     m[x * 3 + y] = val;
 }
 
 void mat3_print(mat3 *m) {
+    assert(m != NULL);
+
     for (int i = 0; i < 3; i++)
     {
         for (int j = 0; j < 3; j++)
@@ -128,11 +147,15 @@ void mat3_print(mat3 *m) {
 }
 
 GLfloat mat3_determinant(mat3 *m) {
+    assert(m != NULL);
+
     return m[0] * m[4] * m[8] + m[1] * m[5] * m[6] + m[2] * m[3] * m[7]
          - m[2] * m[4] * m[6] - m[1] * m[3] * m[8] - m[0] * m[5] * m[7];
 }
 
 void mat3_inverse(mat3 *out, mat3 *in) {
+    assert(out != NULL && in != NULL);
+
     GLfloat det = mat3_determinant(in);
     if (det == 0)
     {
@@ -180,15 +203,21 @@ mat2 *mat2_alloc()
 
 GLfloat mat2_get(mat2 *m, int x, int y)
 {
+    assert(x >= 0 && x < 2 && y >= 0 && y < 2);
+    assert(m != NULL);
     return m[x * 2 + y];
 }
 
 void mat2_set(mat2 *m, GLfloat val, int x, int y)
 {
+    assert(x >= 0 && x < 2 && y >= 0 && y < 2);
+
     m[x * 2 + y] = val;
 }
 
 void mat2_print(mat2 *m) {
+    assert(m != NULL);
+
     for (int i = 0; i < 2; i++)
     {
         for (int j = 0; j < 2; j++)
@@ -200,10 +229,14 @@ void mat2_print(mat2 *m) {
 }
 
 GLfloat mat2_determinant(mat2 *m) {
+    assert(m != NULL);
+
     return m[0] * m[3] - m[1] * m[2];
 }
 
 void mat4_to_mat3(mat3 *out, mat4 *in) {
+    assert(out != NULL && in != NULL);
+
     mat3 buffer[MAT3_SIZE];
     memset(buffer, 0, MAT3_BYTESIZE);
     for (int i = 0; i < 3; i++)
@@ -218,6 +251,8 @@ void mat4_to_mat3(mat3 *out, mat4 *in) {
 
 void mat4_multiply(mat4 *out, mat4 *a, mat4 *b)
 {
+    assert(out != NULL && a != NULL && b != NULL);
+
     mat4 buffer[MAT4_SIZE];
     memset(buffer, 0, MAT4_BYTESIZE);
     for (int x = 0; x < 4; x++)
@@ -242,6 +277,8 @@ vec3 *vec3_alloc() {
 }
 
 void vec3_add(vec3 *out, vec3 *a, vec3 *b) {
+    assert(out != NULL && a != NULL && b != NULL);
+
     vec3 v[VEC3_SIZE];
     memset(v, 0, VEC3_BYTESIZE);
     memcpy(v, a, VEC3_BYTESIZE);
@@ -252,6 +289,8 @@ void vec3_add(vec3 *out, vec3 *a, vec3 *b) {
 }
 
 void vec3_sub(vec3 *out, vec3 *a, vec3 *b) {
+    assert(out != NULL && a != NULL && b != NULL);
+
     vec3 v[VEC3_SIZE];
     memset(v, 0, VEC3_BYTESIZE);
     memcpy(v, a, VEC3_BYTESIZE);
@@ -262,10 +301,14 @@ void vec3_sub(vec3 *out, vec3 *a, vec3 *b) {
 }
 
 vec3 vec3_scalar_mult(vec3 *a, vec3 *b) {
+    assert(a != NULL && b != NULL);
+
     return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
 }
 
 void vec3_cross(vec3 *out, vec3 *a, vec3 *b) {
+    assert(out != NULL && a != NULL && b != NULL);
+
     vec3 v[VEC3_SIZE];
     memset(v, 0, VEC3_BYTESIZE);
     // y1*z2 - z1*y2
@@ -278,6 +321,8 @@ void vec3_cross(vec3 *out, vec3 *a, vec3 *b) {
 }
 
 void vec3_normalize(vec3 *out, vec3 *in) {
+    assert(out != NULL && in != NULL);
+
     double l = sqrt(in[0]*in[0] + in[1]*in[1] + in[2]*in[2]);
     vec3 v[VEC3_SIZE];
     memset(v, 0, VEC3_BYTESIZE);
@@ -289,6 +334,8 @@ void vec3_normalize(vec3 *out, vec3 *in) {
 }
 
 void vec3_component_mult(vec3 *out, vec3 *a, vec3 *b) {
+    assert(out != NULL && a != NULL && b != NULL);
+
     vec3 v[VEC3_SIZE];
     memset(v, 0, VEC3_BYTESIZE);
     memcpy(v, a, VEC3_BYTESIZE);
@@ -299,6 +346,8 @@ void vec3_component_mult(vec3 *out, vec3 *a, vec3 *b) {
 }
 
 void vec3_print(vec3 *v) {
+    assert(v != NULL);
+
     printf("%f %f %f\n", v[0], v[1], v[2]);
 }
 
@@ -309,6 +358,8 @@ vec4 *vec4_alloc() {
 }
 
 void vec4_add(vec4 *out, vec4 *a, vec4 *b) {
+    assert(out != NULL && a != NULL && b != NULL);
+
     vec4 v[VEC4_SIZE];
     memset(v, 0, VEC4_BYTESIZE);
     memcpy(v, a, VEC4_BYTESIZE);
@@ -320,6 +371,8 @@ void vec4_add(vec4 *out, vec4 *a, vec4 *b) {
 }
 
 void vec4_sub(vec4 *out, vec4 *a, vec4 *b) {
+    assert(out != NULL && a != NULL && b != NULL);
+
     vec4 v[VEC4_SIZE];
     memset(v, 0, VEC4_BYTESIZE);
     memcpy(v, a, VEC4_BYTESIZE);
@@ -331,11 +384,15 @@ void vec4_sub(vec4 *out, vec4 *a, vec4 *b) {
 }
 
 vec4 vec4_scalar_mult(vec4 *a, vec4 *b) {
+    assert(a != NULL && b != NULL);
+
     return a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + a[3]*b[3];
 }
 
 
 void vec4_normalize(vec4 *out, vec4 *in) {
+    assert(out != NULL && in != NULL);
+
     double l = sqrt(in[0]*in[0] + in[1]*in[1] + in[2]*in[2] + in[3]*in[3]);
     vec4 v[VEC4_SIZE];
     memset(v, 0, VEC4_BYTESIZE);
@@ -348,6 +405,8 @@ void vec4_normalize(vec4 *out, vec4 *in) {
 }
 
 void vec4_component_mult(vec4 *out, vec4 *a, vec4 *b) {
+    assert(out != NULL && a != NULL && b != NULL);
+
     vec4 v[VEC4_SIZE];
     memset(v, 0, VEC4_BYTESIZE);
     memcpy(v, a, VEC4_BYTESIZE);
@@ -359,11 +418,15 @@ void vec4_component_mult(vec4 *out, vec4 *a, vec4 *b) {
 }
 
 void vec4_print(vec4 *v) {
+    assert(v != NULL);
+
     printf("%f %f %f %f\n", v[0], v[1], v[2], v[3]);
 }
 
 void mat4_transpose(mat4 *out, mat4 *in)
 {
+    assert(out != NULL && in != NULL);
+
     mat4 buffer[MAT4_SIZE];
     memset(buffer, 0, MAT4_BYTESIZE);
     for (int i = 0; i < 4; i++)
@@ -378,6 +441,8 @@ void mat4_transpose(mat4 *out, mat4 *in)
 
 void mat3_transpose(mat3 *out, mat3 *in)
 {
+    assert(out != NULL && in != NULL);
+
     mat3 buffer[MAT3_SIZE];
     memset(buffer, 0, MAT3_BYTESIZE);
     for (int i = 0; i < 3; i++)
@@ -392,6 +457,8 @@ void mat3_transpose(mat3 *out, mat3 *in)
 
 void identity(mat4 *out)
 {
+    assert(out != NULL);
+
     mat4 buffer[MAT4_SIZE] =
         {1, 0, 0, 0,
          0, 1, 0, 0,
@@ -402,6 +469,8 @@ void identity(mat4 *out)
 
 void translate(mat4 *out, mat4 *in, vec3 *v)
 {
+    assert(out != NULL && in != NULL && v != NULL);
+
     mat4 buffer[MAT4_SIZE];
     memset(buffer, 0, MAT4_BYTESIZE);
     identity(buffer);
@@ -412,6 +481,8 @@ void translate(mat4 *out, mat4 *in, vec3 *v)
 }
 
 void scale(mat4 *out, mat4 *in, vec3 *v) {
+    assert(out != NULL && in != NULL && v != NULL);
+
     mat4 buffer[MAT4_SIZE];
     memset(buffer, 0, MAT4_BYTESIZE);
     identity(buffer);
@@ -422,6 +493,8 @@ void scale(mat4 *out, mat4 *in, vec3 *v) {
 }
 
 void rotatez(mat4 *out, mat4 *in, GLfloat angle_rad) {
+    assert(out != NULL && in != NULL);
+
     mat4 buffer[MAT4_SIZE];
     memset(buffer, 0, MAT4_BYTESIZE);
     identity(buffer);
@@ -433,6 +506,8 @@ void rotatez(mat4 *out, mat4 *in, GLfloat angle_rad) {
 }
 
 void rotatey(mat4 *out, mat4 *in, GLfloat angle_rad) {
+    assert(out != NULL && in != NULL);
+
     mat4 buffer[MAT4_SIZE];
     memset(buffer, 0, MAT4_BYTESIZE);
     identity(buffer);
@@ -444,6 +519,8 @@ void rotatey(mat4 *out, mat4 *in, GLfloat angle_rad) {
 }
 
 void rotatex(mat4 *out, mat4 *in, GLfloat angle_rad) {
+    assert(out != NULL && in != NULL);
+
     mat4 buffer[MAT4_SIZE];
     memset(buffer, 0, MAT4_BYTESIZE);
     identity(buffer);
@@ -455,6 +532,8 @@ void rotatex(mat4 *out, mat4 *in, GLfloat angle_rad) {
 }
 
 void rotateaxis(mat4 *out, mat4 *in, vec3 *axis, GLfloat angle_rad) {
+    assert(out != NULL && in != NULL && axis != NULL);
+
     mat4 buffer[MAT4_SIZE];
     memset(buffer, 0, MAT4_BYTESIZE);
     identity(buffer);
@@ -482,6 +561,8 @@ void rotateaxis(mat4 *out, mat4 *in, vec3 *axis, GLfloat angle_rad) {
 }
 
 void lookAt(mat4 *out, vec3 *eye, vec3 *center, vec3 *up) {
+    assert(out != NULL && eye != NULL && center != NULL && up != NULL);
+
     mat4 m[MAT4_SIZE];
     memset(m, 0, MAT4_BYTESIZE);
     identity(m);
@@ -512,6 +593,8 @@ void lookAt(mat4 *out, vec3 *eye, vec3 *center, vec3 *up) {
 }
 
 void perspective(mat4 *out, GLfloat fovy, GLfloat aspect, GLfloat near, GLfloat far) {
+    assert(out != NULL);
+
     mat4 m[MAT4_SIZE];
     memset(m, 0, MAT4_BYTESIZE);
     GLfloat t = near * tan(fovy/2);

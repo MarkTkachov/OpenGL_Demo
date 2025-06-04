@@ -9,6 +9,8 @@
 
 char *read_file(const char *filename, size_t *length)
 {
+    assert(filename != NULL);
+    
     size_t file_length;
     FILE *file = fopen(filename, "r");
     if (file == NULL)

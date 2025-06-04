@@ -26,6 +26,12 @@ OBJECTS = $(SOURCE:src/%.c=build/%.o)
 
 .PHONY = all clean uninstall reinstall 
 
+ifdef NDEBUG
+CUSTOM_CFLAGS += -DNDEBUG
+else
+CUSTOM_CFLAGS += -DDEBUG
+endif
+
 ifeq ($(UNAME_S), Linux) #LINUX
 	ECHO_MESSAGE = "Linux"
 	LIBS += -lGL `pkg-config --libs glfw3 glew` -lXrandr
@@ -48,7 +54,7 @@ endif
 
 all: $(SRC_DIRS) $(OBJ_DIRS) inc/ $(OBJECTS) $(BIN) 
 
-$(BIN): $(SOURCE) $(OBJECTS) $(HEAD) 
+$(BIN): $(SOURCE) $(OBJECTS) $(HEAD)
 	$(CPP) $(CUSTOM_CFLAGS) -o $(BIN) $(OBJECTS) $(LIBS) 
 
 build/%.o: src/%.c $(HEAD)

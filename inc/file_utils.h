@@ -5,6 +5,13 @@
 #include <GL/glew.h>
 #include <data_structs.h>
 
+/**
+ * @brief  Read the contents of a file into a dynamically allocated string
+ * 
+ * @param filename  Path to the file to read, NOT NULL
+ * @param length  Pointer to store the length of the file content, can be NULL
+ * @return char*  A dynamically allocated string containing the file content, or NULL on failure.
+ */
 char *read_file(const char *filename, size_t *length);
 
 /**

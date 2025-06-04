@@ -54,7 +54,7 @@ GLfloat logoColor[] = {220.0f, 60.0f, 5.0f};
 
 
 void init(void)
-{
+{ 
     glEnable(GL_DEPTH_TEST);
     // glEnable(GL_CULL_FACE);
     glDepthMask(GL_TRUE);
