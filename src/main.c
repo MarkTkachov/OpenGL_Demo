@@ -16,6 +16,9 @@
 #include <math.h>
 #include <string.h>
 
+int screenWidth = 800;
+int screenHeight = 800;
+
 Object3D earthObject;
 Object3D skybox;
 Object3D waterSurface;
@@ -107,7 +110,7 @@ void init(void)
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glViewport(0, 0, 800, 800);
 
-    calculate_projection_matrix(90 / (180 / M_PI), 800 / 800, 0.01, 1000);
+    calculate_projection_matrix(90 / (180 / M_PI), (float)screenWidth / (float)screenHeight, 0.01, 1000);
 }
 
 void draw(void)
@@ -200,6 +203,9 @@ void draw(void)
 void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
     glViewport(0, 0, width, height);
+    screenWidth = width;
+    screenHeight = height;
+    calculate_projection_matrix(90 / (180 / M_PI), (float)screenWidth / (float)screenHeight, 0.01, 1000);
 }
 
 int main(int argc, char *argv[])
