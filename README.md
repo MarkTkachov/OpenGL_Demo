@@ -35,3 +35,4 @@ To run the program, execute the following command:
 ## Resources - Models, Textures, etc.
  - [textures/water.jpg](textures/water.jpg) - [source](https://www.cadhatch.com/seamless-water-textures?pgid=kw6kmy99-70c29c36-7aeb-4d44-a633-0e9e2879494e)
  - [textures/water_normal.jpg](textures/water_normal.jpg) - [source](https://www.cadhatch.com/seamless-water-textures?pgid=kw6kmy99-9d48d994-0199-4701-9c56-b0e34824973c)
+ - Balloon Model and texture - [source](https://free3d.com/3d-model/hot-air-balloon-v1--156268.html)

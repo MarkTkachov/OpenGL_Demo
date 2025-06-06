@@ -22,6 +22,7 @@ int screenHeight = 800;
 Object3D earthObject;
 Object3D skybox;
 Object3D waterSurface;
+Object3D balloon;
 
 GLint emmisiveMaterialColorUniformLocation;
 GLint ambientLightColorUniformLocation;
@@ -51,6 +52,9 @@ GLuint waterNormalTexture;
 GLint waterTextureUniformLocation;
 GLint waterNormalTextureUniformLocation;
 
+GLuint balloonTexture;
+GLint balloonTextureUniformLocation;
+
 
 GLfloat logoColor[] = {220.0f, 60.0f, 5.0f};
 
@@ -66,6 +70,7 @@ void init(void)
     GLuint program = compile_program("shaders/vertexShader.glsl", "shaders/fragmentShader.glsl");
     GLuint skyProgram = compile_program("shaders/skybox_vertex.glsl", "shaders/skybox_fragment.glsl");
     GLuint waterProgram = compile_program("shaders/vertexShader.glsl", "shaders/normal_mapped_fragment.glsl");
+    GLuint simpleProgram = compile_program("shaders/vertexShader.glsl", "shaders/simple_fragment.glsl");
 
     emmisiveMaterialColorUniformLocation = glGetUniformLocation(program, "emmisiveMaterialColor");
     ambientLightColorUniformLocation = glGetUniformLocation(program, "ambientLightColor");
@@ -102,10 +107,12 @@ void init(void)
     });
     waterTexture = load_texture("textures/water.jpg");
     waterNormalTexture = load_texture("textures/water_normal.jpg");
+    balloonTexture = load_texture("textures/combined_texture_balloon.png");
 
     load_3d_object(&earthObject, "models/earth.obj", program);
     load_3d_object(&skybox, "models/cube.obj", skyProgram);
     load_3d_object(&waterSurface, "models/flat_panel.obj", waterProgram);
+    load_3d_object(&balloon, "models/balloon.obj", simpleProgram);
     
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glViewport(0, 0, 800, 800);
@@ -163,8 +170,19 @@ void draw(void)
     render_object(&waterSurface);
 
 
-    use_object_program(&earthObject);
-    init_uniforms(earthObject.program);
+    use_object_program(&balloon);
+    init_uniforms(balloon.program);
+    balloon.rotation[1] = M_PI / 2.0f * angle;
+
+    emmisiveMaterialColorUniformLocation = glGetUniformLocation(balloon.program, "emmisiveMaterialColor");
+    ambientLightColorUniformLocation = glGetUniformLocation(balloon.program, "ambientLightColor");
+    ambientMaterialColorUniformLocation = glGetUniformLocation(balloon.program, "ambientMaterialColor");
+    diffuseLightColorUniformLocation = glGetUniformLocation(balloon.program, "diffuseLightColor");
+    diffuseMaterialColorUniformLocation = glGetUniformLocation(balloon.program, "diffuseMaterialColor");
+    specularLightColorUniformLocation = glGetUniformLocation(balloon.program, "specularLightColor");
+    specularMaterialColorUniformLocation = glGetUniformLocation(balloon.program, "specularMaterialColor");
+    shininessMaterailUniformLocation = glGetUniformLocation(balloon.program, "shininess");
+    lightPositionUniformLocation = glGetUniformLocation(balloon.program, "lightPosition");
 
     // material properties
     glUniform4f(emmisiveMaterialColorUniformLocation, 0, 0, 0, 1.0f);
@@ -177,26 +195,15 @@ void draw(void)
     glUniform1f(shininessMaterailUniformLocation, 51.2f);
     //light position in scene coordinates
     glUniform3f(lightPositionUniformLocation, lightPosition[0], lightPosition[1], lightPosition[2]);
-    glUniform1f(glGetUniformLocation(earthObject.program, "time"), angle);
+    glUniform1f(glGetUniformLocation(balloon.program, "time"), angle);
 
     //textures
-    glUniform1i(dayTextureUniformLocation, 1);
+    balloonTextureUniformLocation = glGetUniformLocation(balloon.program, "baseTexture");
+    glUniform1i(balloonTextureUniformLocation, 1);
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, dayTexture);
+    glBindTexture(GL_TEXTURE_2D, balloonTexture);
 
-    glUniform1i(nightTextureUniformLocation, 2);
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, nightTexture);
-
-    glUniform1i(oceanMaskTextureUniformLocation, 3);
-    glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_2D, oceanMaskTexture);
-
-    glUniform1i(cloudsTextureUniformLocation, 4);
-    glActiveTexture(GL_TEXTURE4);
-    glBindTexture(GL_TEXTURE_2D, cloudsTexture);
-
-    render_object(&earthObject);
+    render_object(&balloon);
 
 }
 
