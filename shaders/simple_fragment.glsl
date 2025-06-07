@@ -23,9 +23,9 @@ uniform float time;
 void main() {
     vec3 LightVector = normalize(vec3(viewMatrix * vec4(lightPosition, 0.0)) - Position);
     vec3 nNormal = normalize(Normal);
-    vec4 emmisive = emmisiveMaterialColor;
 
     vec4 texColor = texture(baseTexture, TexCoord);
+    vec4 emmisive = emmisiveMaterialColor * texColor;
     vec4 ambient = ambientLightColor * texColor;
 
     vec3 reflectedLight = reflect(-LightVector, nNormal);

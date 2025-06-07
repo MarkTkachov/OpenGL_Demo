@@ -19,30 +19,16 @@
 int screenWidth = 800;
 int screenHeight = 800;
 
-Object3D earthObject;
 Object3D skybox;
 Object3D waterSurface;
 Object3D balloon;
 
 GLint emmisiveMaterialColorUniformLocation;
 GLint ambientLightColorUniformLocation;
-GLint ambientMaterialColorUniformLocation;
 GLint diffuseLightColorUniformLocation;
-GLint diffuseMaterialColorUniformLocation;
 GLint specularLightColorUniformLocation;
-GLint specularMaterialColorUniformLocation;
-GLint shininessMaterailUniformLocation;
+GLint shininessMaterialUniformLocation;
 GLint lightPositionUniformLocation;
-
-GLint dayTextureUniformLocation;
-GLint nightTextureUniformLocation;
-GLint oceanMaskTextureUniformLocation;
-GLint cloudsTextureUniformLocation;
-
-GLuint dayTexture;
-GLuint nightTexture;
-GLuint oceanMaskTexture;
-GLuint cloudsTexture;
 
 GLuint skyTexture;
 GLint skyTextureUniformLocation;
@@ -56,10 +42,6 @@ GLuint balloonTexture;
 GLint balloonTextureUniformLocation;
 
 
-GLfloat logoColor[] = {220.0f, 60.0f, 5.0f};
-
-
-
 void init(void)
 { 
     glEnable(GL_DEPTH_TEST);
@@ -67,36 +49,14 @@ void init(void)
     glDepthMask(GL_TRUE);
     // glutInitDisplayMode(GLUT_DEPTH);
     // create and compile vertex shader
-    GLuint program = compile_program("shaders/vertexShader.glsl", "shaders/fragmentShader.glsl");
     GLuint skyProgram = compile_program("shaders/skybox_vertex.glsl", "shaders/skybox_fragment.glsl");
     GLuint waterProgram = compile_program("shaders/vertexShader.glsl", "shaders/normal_mapped_fragment.glsl");
     GLuint simpleProgram = compile_program("shaders/vertexShader.glsl", "shaders/simple_fragment.glsl");
-
-    emmisiveMaterialColorUniformLocation = glGetUniformLocation(program, "emmisiveMaterialColor");
-    ambientLightColorUniformLocation = glGetUniformLocation(program, "ambientLightColor");
-    ambientMaterialColorUniformLocation = glGetUniformLocation(program, "ambientMaterialColor");
-    diffuseLightColorUniformLocation = glGetUniformLocation(program, "diffuseLightColor");
-    diffuseMaterialColorUniformLocation = glGetUniformLocation(program, "diffuseMaterialColor");
-    specularLightColorUniformLocation = glGetUniformLocation(program, "specularLightColor");
-    specularMaterialColorUniformLocation = glGetUniformLocation(program, "specularMaterialColor");
-    shininessMaterailUniformLocation = glGetUniformLocation(program, "shininess");
-    lightPositionUniformLocation = glGetUniformLocation(program, "lightPosition");
-
-    init_uniforms(program);
-
-    dayTextureUniformLocation = glGetUniformLocation(program, "dayTexture");
-    nightTextureUniformLocation = glGetUniformLocation(program, "nightTexture");
-    oceanMaskTextureUniformLocation = glGetUniformLocation(program, "oceanMaskTexture");
-    cloudsTextureUniformLocation = glGetUniformLocation(program, "cloudsTexture");
     
     skyTextureUniformLocation = glGetUniformLocation(skyProgram, "skyTexture");
     waterTextureUniformLocation = glGetUniformLocation(waterProgram, "baseTexture");
     waterNormalTextureUniformLocation = glGetUniformLocation(waterProgram, "normalTexture");
     
-    dayTexture = load_texture("textures/earth_day.png");
-    nightTexture = load_texture("textures/earth_night.png");
-    oceanMaskTexture = load_texture("textures/earth_ocean_mask.png");
-    cloudsTexture = load_texture("textures/earth_clouds.png");
     skyTexture = load_cubemap((const char *[6]){
         "textures/spiaggia_cubemap/px.png",
         "textures/spiaggia_cubemap/nx.png",
@@ -109,7 +69,7 @@ void init(void)
     waterNormalTexture = load_texture("textures/water_normal.jpg");
     balloonTexture = load_texture("textures/combined_texture_balloon.png");
 
-    load_3d_object(&earthObject, "models/earth.obj", program);
+
     load_3d_object(&skybox, "models/cube.obj", skyProgram);
     load_3d_object(&waterSurface, "models/flat_panel.obj", waterProgram);
     load_3d_object(&balloon, "models/balloon.obj", simpleProgram);
@@ -127,13 +87,11 @@ void draw(void)
     static float angle = 0;
     static int xRev = 1, yRev = 1;
 
-    vec3 lightPosition[VEC3_SIZE] = {100 * sin(angle/2), 100 * cos(angle/2), 0};
+    vec3 lightPosition[VEC3_SIZE] = {10000 * sin(angle/5), 10000 * cos(angle/5), 0};
     angle += 0.02;
 
-    earthObject.rotation[1] = M_PI / 3.123 * angle;
 
-
-    calculate_view_matrix((vec3[]){2, 1, 2 * cos(angle/2)}, (vec3[]){0, 0, 0}, (vec3[]){0, 1, 0});
+    calculate_view_matrix((vec3[]){2, 1, 10}, (vec3[]){0, 0, 0}, (vec3[]){0, 1, 0});
 
     glDepthMask(GL_FALSE);
     glDisable(GL_CULL_FACE);
@@ -160,39 +118,34 @@ void draw(void)
     glActiveTexture(GL_TEXTURE6);
     glBindTexture(GL_TEXTURE_2D, waterNormalTexture);
 
-    glUniform4f(glGetUniformLocation(waterSurface.program, "ambientLightColor"), 0.1f, 0.1f, 0.1f, 0.1f);
-    glUniform4f(glGetUniformLocation(waterSurface.program, "diffuseLightColor"), 1.0f, 1.0f, 1.0f, 1.0f);
-    glUniform4f(glGetUniformLocation(waterSurface.program, "specularLightColor"), 1.0f, 1.0f, 1.0f, 1.0f);
-    glUniform1f(glGetUniformLocation(waterSurface.program, "shininess"), 10.0f);
+    glUniform4f(glGetUniformLocation(waterSurface.program, "ambientLightColor"), 0.2f, 0.2f, 0.2f, 1.0f);
+    glUniform4f(glGetUniformLocation(waterSurface.program, "diffuseLightColor"), 0.8f, 0.8f, 0.8f, 1.0f);
+    glUniform4f(glGetUniformLocation(waterSurface.program, "specularLightColor"), 0.8f, 0.8f, 0.8f, 1.0f);
+    glUniform1f(glGetUniformLocation(waterSurface.program, "shininess"), 100.0f);
     glUniform3f(glGetUniformLocation(waterSurface.program, "lightPosition"), lightPosition[0], lightPosition[1], lightPosition[2]);
     glUniform1f(glGetUniformLocation(waterSurface.program, "time"), angle);
     glUniform1f(glGetUniformLocation(waterSurface.program, "textureScale"), 100.0f);
     render_object(&waterSurface);
 
 
+    glEnable(GL_CULL_FACE);
     use_object_program(&balloon);
     init_uniforms(balloon.program);
     balloon.rotation[1] = M_PI / 2.0f * angle;
 
     emmisiveMaterialColorUniformLocation = glGetUniformLocation(balloon.program, "emmisiveMaterialColor");
     ambientLightColorUniformLocation = glGetUniformLocation(balloon.program, "ambientLightColor");
-    ambientMaterialColorUniformLocation = glGetUniformLocation(balloon.program, "ambientMaterialColor");
     diffuseLightColorUniformLocation = glGetUniformLocation(balloon.program, "diffuseLightColor");
-    diffuseMaterialColorUniformLocation = glGetUniformLocation(balloon.program, "diffuseMaterialColor");
     specularLightColorUniformLocation = glGetUniformLocation(balloon.program, "specularLightColor");
-    specularMaterialColorUniformLocation = glGetUniformLocation(balloon.program, "specularMaterialColor");
-    shininessMaterailUniformLocation = glGetUniformLocation(balloon.program, "shininess");
+    shininessMaterialUniformLocation = glGetUniformLocation(balloon.program, "shininess");
     lightPositionUniformLocation = glGetUniformLocation(balloon.program, "lightPosition");
 
     // material properties
     glUniform4f(emmisiveMaterialColorUniformLocation, 0, 0, 0, 1.0f);
-    glUniform4f(ambientLightColorUniformLocation, 0.5f, 0.5f, 0.5f, 1.0f);
-    glUniform4f(ambientMaterialColorUniformLocation, 0.23f, 0.09f, 0.03f, 1.0f);
-    glUniform4f(diffuseLightColorUniformLocation, 1.0f, 1.0f, 1.0f, 1.0f);
-    glUniform4f(diffuseMaterialColorUniformLocation, 0.55f, 0.21f, 0.07f, 1.0f);
-    glUniform4f(specularLightColorUniformLocation, 1.0f, 1.0f, 1.0f, 1.0f);
-    glUniform4f(specularMaterialColorUniformLocation, 0.58f, 0.22f, 0.07f, 1.0f);
-    glUniform1f(shininessMaterailUniformLocation, 51.2f);
+    glUniform4f(ambientLightColorUniformLocation, 0.2f, 0.2f, 0.2f, 1.0f);
+    glUniform4f(diffuseLightColorUniformLocation, 0.8f, 0.8f, 0.8f, 1.0f);
+    glUniform4f(specularLightColorUniformLocation, 0.8f, 0.8f, 0.8f, 1.0f);
+    glUniform1f(shininessMaterialUniformLocation, 51.2f);
     //light position in scene coordinates
     glUniform3f(lightPositionUniformLocation, lightPosition[0], lightPosition[1], lightPosition[2]);
     glUniform1f(glGetUniformLocation(balloon.program, "time"), angle);
