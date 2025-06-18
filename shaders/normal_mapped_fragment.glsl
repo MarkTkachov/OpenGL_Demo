@@ -35,7 +35,7 @@ void main() {
     vec4 diffuse = texColor * max(dot(LightVector, nNormal), 0) * diffuseLightColor;
     vec4 specular = texColor * pow(max(dot(reflectedLight, nNormal), 0), shininess) * specularLightColor;
     vec4 color = 
-    // emmisive
+    emmisive
     + ambient
     + diffuse
     + specular;

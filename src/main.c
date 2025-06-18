@@ -98,8 +98,20 @@ void draw(void)
     static float angle = 0;
     static int xRev = 1, yRev = 1;
 
-    vec3 lightPosition[VEC3_SIZE] = {10000 * sin(angle/5), 10000 * cos(angle/5), 0};
-    angle += 0.02;
+    vec3 lightPosition[VEC3_SIZE] = {1000 * sin(angle/20), 1000 * cos(angle/20), 0};
+    vec4 lightColor[VEC4_SIZE] = {0.8f, 0.8f, 0.8f, 1.0f};
+    angle += 0.01;
+    if (lightPosition[1] < 0) {
+        lightColor[0] = 0.0f;
+        lightColor[1] = 0.0f;
+        lightColor[2] = 0.0f;
+        // high night speed
+        angle += 0.03;
+    } else {
+        lightColor[0] = 0.8f;
+        lightColor[1] = 0.8f;
+        lightColor[2] = 0.8f;
+    }
 
 
     calculate_view_matrix(cameraPosition, cameraTarget, (vec3[]){0, 100, 0});
@@ -113,12 +125,18 @@ void draw(void)
     glActiveTexture(GL_TEXTURE10);
     glBindTexture(GL_TEXTURE_CUBE_MAP, skyTexture);
 
+    if (lightPosition[1] < 0) {
+        glUniform3f(glGetUniformLocation(skybox.program, "colorMultiplier"), 0.2f, 0.2f, 0.2f);
+    } else {
+        glUniform3f(glGetUniformLocation(skybox.program, "colorMultiplier"), 1.0f, 1.0f, 1.0f);
+    }
+
     render_object(&skybox);
     glDepthMask(GL_TRUE);
 
-    waterSurface.position[1] = -10;
-    waterSurface.scale[0] = 1000;
-    waterSurface.scale[2] = 1000;
+    waterSurface.position[1] = -20;
+    waterSurface.scale[0] = 10000;
+    waterSurface.scale[2] = 10000;
     use_object_program(&waterSurface);
     init_uniforms(waterSurface.program);
 
@@ -130,12 +148,12 @@ void draw(void)
     glBindTexture(GL_TEXTURE_2D, waterNormalTexture);
 
     glUniform4f(glGetUniformLocation(waterSurface.program, "ambientLightColor"), 0.2f, 0.2f, 0.2f, 1.0f);
-    glUniform4f(glGetUniformLocation(waterSurface.program, "diffuseLightColor"), 0.8f, 0.8f, 0.8f, 1.0f);
-    glUniform4f(glGetUniformLocation(waterSurface.program, "specularLightColor"), 0.8f, 0.8f, 0.8f, 1.0f);
-    glUniform1f(glGetUniformLocation(waterSurface.program, "shininess"), 100.0f);
+    glUniform4f(glGetUniformLocation(waterSurface.program, "diffuseLightColor"), lightColor[0], lightColor[1], lightColor[2], 1.0f);
+    glUniform4f(glGetUniformLocation(waterSurface.program, "specularLightColor"), lightColor[0], lightColor[1], lightColor[2], 1.0f);
+    glUniform1f(glGetUniformLocation(waterSurface.program, "shininess"), 50.0f);
     glUniform3f(glGetUniformLocation(waterSurface.program, "lightPosition"), lightPosition[0], lightPosition[1], lightPosition[2]);
     glUniform1f(glGetUniformLocation(waterSurface.program, "time"), angle);
-    glUniform1f(glGetUniformLocation(waterSurface.program, "textureScale"), 100.0f);
+    glUniform1f(glGetUniformLocation(waterSurface.program, "textureScale"), 1000.0f);
     render_object(&waterSurface);
 
 
@@ -154,8 +172,8 @@ void draw(void)
     // material properties
     glUniform4f(emmisiveMaterialColorUniformLocation, 0, 0, 0, 1.0f);
     glUniform4f(ambientLightColorUniformLocation, 0.2f, 0.2f, 0.2f, 1.0f);
-    glUniform4f(diffuseLightColorUniformLocation, 0.8f, 0.8f, 0.8f, 1.0f);
-    glUniform4f(specularLightColorUniformLocation, 0.8f, 0.8f, 0.8f, 1.0f);
+    glUniform4f(diffuseLightColorUniformLocation, lightColor[0], lightColor[1], lightColor[2], 1.0f);
+    glUniform4f(specularLightColorUniformLocation, lightColor[0], lightColor[1], lightColor[2], 1.0f);
     glUniform1f(shininessMaterialUniformLocation, 51.2f);
     //light position in scene coordinates
     glUniform3f(lightPositionUniformLocation, lightPosition[0], lightPosition[1], lightPosition[2]);
@@ -180,7 +198,9 @@ void draw(void)
     fire.scale[0] = 0.1f;
     fire.scale[1] = 0.1f;
     fire.scale[2] = 0.05f;
+    fire.position[0] = 0.0f;
     fire.position[1] = 1.65f;
+    fire.position[2] = 0.0f;
 
 
     emmisiveMaterialColorUniformLocation = glGetUniformLocation(fire.program, "emmisiveMaterialColor");
@@ -192,8 +212,8 @@ void draw(void)
 
     glUniform4f(emmisiveMaterialColorUniformLocation, 1.0f, 1.0f, 1.0f, 1.0f);
     glUniform4f(ambientLightColorUniformLocation, 0.2f, 0.2f, 0.2f, 1.0f);
-    glUniform4f(diffuseLightColorUniformLocation, 0.8f, 0.8f, 0.8f, 1.0f);
-    glUniform4f(specularLightColorUniformLocation, 0.8f, 0.8f, 0.8f, 1.0f);
+    glUniform4f(diffuseLightColorUniformLocation, lightColor[0], lightColor[1], lightColor[2], 1.0f);
+    glUniform4f(specularLightColorUniformLocation, lightColor[0], lightColor[1], lightColor[2], 1.0f);
     glUniform1f(shininessMaterialUniformLocation, 51.2f);
     glUniform3f(lightPositionUniformLocation, lightPosition[0], lightPosition[1], lightPosition[2]);
     glUniform1f(glGetUniformLocation(fire.program, "time"), angle);
@@ -203,6 +223,14 @@ void draw(void)
     glUniform1i(fireTextureUniformLocation, 2);
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, fireTexture);
+    render_object(&fire);
+
+    fire.position[0] = lightPosition[0];
+    fire.position[1] = lightPosition[1];
+    fire.position[2] = lightPosition[2];
+    fire.scale[0] = 100;
+    fire.scale[1] = 100;
+    fire.scale[2] = 100;
     render_object(&fire);
     glDisable(GL_CULL_FACE);
 

@@ -5,7 +5,9 @@ in vec3 Position;
 
 uniform samplerCube skyTexture;
 
+uniform vec3 colorMultiplier;
+
 void main() {
-    vec3 color = texture(skyTexture, Position).xyz;
+    vec3 color = texture(skyTexture, Position).xyz * colorMultiplier;
     gl_FragColor = vec4(color, 1.0);
 }
