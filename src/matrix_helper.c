@@ -5,6 +5,21 @@
 #include <stdio.h>
 #include <assert.h>
 
+void mat3_vec3_multiply(vec3 *out, mat3 *m, vec3 *v) {
+    assert(out != NULL && m != NULL && v != NULL);
+
+    vec3 result[VEC3_SIZE];
+    memset(result, 0, VEC3_BYTESIZE);
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            result[i] += mat3_get(m, j, i) * v[j];
+        }
+    }
+    memcpy(out, result, VEC3_BYTESIZE);
+}
+
 mat4 *mat4_alloc()
 {
     mat4 *m = malloc(MAT4_BYTESIZE);

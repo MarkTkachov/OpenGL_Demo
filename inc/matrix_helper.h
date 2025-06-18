@@ -27,7 +27,7 @@ typedef GLfloat vec4;
 #define VEC4_SIZE 4
 #define VEC4_BYTESIZE (sizeof(vec4)*VEC4_SIZE)
 
-
+void mat3_vec3_multiply(vec3 *out, mat3 *m, vec3 *v);
 
 mat4 *mat4_alloc();
 GLfloat mat4_get(mat4 *m, int x, int y);

@@ -16,7 +16,8 @@ uniform float shininess;
 
 uniform sampler2D baseTexture;
 
-uniform float textureScale;
+uniform float texXOffset;
+uniform float texYOffset;
 
 uniform float time;
 
@@ -24,7 +25,7 @@ void main() {
     vec3 LightVector = normalize(vec3(viewMatrix * vec4(lightPosition, 0.0)) - Position);
     vec3 nNormal = normalize(Normal);
 
-    vec4 texColor = texture(baseTexture, TexCoord);
+    vec4 texColor = texture(baseTexture, TexCoord + vec2(texXOffset, texYOffset));
     vec4 emmisive = emmisiveMaterialColor * texColor;
     vec4 ambient = ambientLightColor * texColor;
 
