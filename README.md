@@ -5,9 +5,6 @@ This repository contains the code for the CG1 project, which is a part of the Co
 
 ## People Involved
  - Mark Tkachov
- - Bugra Han Tas
- - Dustin Erdner
- - Huldah Chayo Tientcheu
 
 ## Getting Started - Linux
 To run the project, you need to have the following dependencies installed:
