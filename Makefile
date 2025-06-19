@@ -23,14 +23,17 @@ HEAD := $(wildcard inc/*.h)
 
 OBJECTS = $(SOURCE:src/%.c=build/%.o)
 
-
-.PHONY = all clean uninstall reinstall 
-
+DEBUG_MODE := -DDEBUG
 ifdef NDEBUG
-CUSTOM_CFLAGS += -DNDEBUG
+DEBUG_MODE := -DNDEBUG
 else
-CUSTOM_CFLAGS += -DDEBUG
+DEBUG_MODE := -DDEBUG
 endif
+
+
+.PHONY = all prod clean uninstall reinstall 
+
+
 
 ifeq ($(UNAME_S), Linux) #LINUX
 	ECHO_MESSAGE = "Linux"
@@ -54,12 +57,15 @@ endif
 
 all: $(SRC_DIRS) $(OBJ_DIRS) inc/ $(OBJECTS) $(BIN) 
 
+prod : DEBUG_MODE = -DNDEBUG
+prod : all
+
 $(BIN): $(SOURCE) $(OBJECTS) $(HEAD)
-	$(CPP) $(CUSTOM_CFLAGS) -o $(BIN) $(OBJECTS) $(LIBS) 
+	$(CPP) $(CUSTOM_CFLAGS) $(DEBUG_MODE) -o $(BIN) $(OBJECTS) $(LIBS) 
 
 build/%.o: src/%.c $(HEAD)
 	@mkdir -p build 
-	$(CPP) $(CUSTOM_CFLAGS) -c $< -o $@
+	$(CPP) $(CUSTOM_CFLAGS) $(DEBUG_MODE) -c $< -o $@
 
 uninstall: clean
 	@rm -f $(BIN)
