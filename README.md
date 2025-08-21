@@ -1,4 +1,4 @@
-# CG1_Projekt
+# OpenGL Demo
 
 ## Description
 This repository contains the code for the CG1 project, which is a part of the Computer Graphics course at the Hochschule Hannover - University of Applied Sciences And Arts. The project involves implementing a 3D Scene with OpenGL
@@ -27,6 +27,12 @@ To run the program, execute the following command:
 ``` bash
 ./cg1
 ```
+
+## Controls
+
+WASD - move camera orward/left/back/right
+
+Arrow Keys - rotate camera Up/Down/Left/Right
 
 
 ## Resources - Models, Textures, etc.
